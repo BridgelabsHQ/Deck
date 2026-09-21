@@ -1,5 +1,5 @@
 import "./node-guard.js";
-import { app, BrowserWindow, desktopCapturer, dialog, powerMonitor, protocol, net, shell, session, safeStorage, type Session } from "electron";
+import { app, BrowserWindow, desktopCapturer, dialog, powerMonitor, protocol, net, shell, session, safeStorage, nativeImage, type Session } from "electron";
 import path from "node:path";
 import fsPromises from "node:fs/promises";
 import os from "node:os";
@@ -82,6 +82,11 @@ const APP_LAUNCHED_AT = Date.now();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// Product name for the app menu, About panel, notifications, etc.
+// (Packaged builds get the Dock name from the bundle; dev gets it from
+// Electron.app's Info.plist, which this checkout overrides to Deck.)
+app.setName("Deck");
 
 // fs.watch failures (EMFILE fd exhaustion, ENOSPC watch limits) surface as
 // uncaught exceptions from Node's watcher internals, bypassing chokidar's
@@ -581,6 +586,16 @@ app.on('child-process-gone', (_event, details) => {
 });
 
 app.whenReady().then(async () => {
+  // Dev-only Dock icon: packaged builds get theirs from icon.icns via
+  // Forge, but `electron .` always shows Electron's stock icon otherwise.
+  if (process.platform === "darwin" && !app.isPackaged) {
+    try {
+      app.dock?.setIcon(nativeImage.createFromPath(path.join(__dirname, "../../icons/icon.png")));
+    } catch (error) {
+      console.error("[Dock] Failed to set dev dock icon:", error);
+    }
+  }
+
   // Register custom protocol before creating window.
   // In production this serves the renderer SPA; in dev (and prod) it also
   // serves workspace files via app://workspace/<rel-path> for media previews.
