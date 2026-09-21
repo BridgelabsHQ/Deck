@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
 import type { ServerFrame } from '@rowboat/spaces-protocol';
-import { startHarbor, type RunningHarbor } from '../src/server.js';
+import type { RunningHarbor } from '../src/server.js';
+import { startTestHarbor } from './helpers.js';
 
 // Live-face tests: subscribe/replay/live/presence over a real socket.
 
@@ -10,7 +11,7 @@ let spaceId: string;
 let readmeId: string;
 
 beforeAll(async () => {
-  harbor = await startHarbor({
+  harbor = await startTestHarbor({
     seedMembers: [
       { id: 'ramnique', displayName: 'Ramnique' },
       { id: 'gagan', displayName: 'Gagan' },
@@ -114,7 +115,7 @@ describe('live face', () => {
   });
 
   it('resume from a mid-stream offset replays only the tail; offsets stay contiguous across replay→live', async () => {
-    const head = await harbor.service.headOffset(spaceId);
+    const head = await harbor.store.head(spaceId);
     const client = await connect('dev-gagan'); // gagan seeded into the space
     client.send({ kind: 'subscribe', spaceId, afterOffset: head - 1 });
     await client.until((fs) => eventFrames(fs).length >= 1, 'tail replay');
@@ -138,6 +139,12 @@ describe('live face', () => {
     const err = client.frames.find((f) => f.kind === 'error') as Extract<ServerFrame, { kind: 'error' }>;
     expect(err.code).toBe('forbidden');
     client.close();
+  });
+
+  it('the catch-up read is gated at the service: a non-member cannot read the log', async () => {
+    const other = await harbor.service.createSpace({ memberId: 'ramnique' }, 'Private log');
+    await expect(harbor.service.replay({ memberId: 'gagan' }, other.id, 0)).rejects.toMatchObject({ code: 'forbidden' });
+    expect((await harbor.service.replay({ memberId: 'ramnique' }, other.id, 0)).events.map((e) => e.event.type)).toEqual(['membership']);
   });
 
   it('presence fans out to space subscribers as ephemeral frames', async () => {
@@ -216,7 +223,7 @@ describe('live face', () => {
 
   it('backpressure: a peer that stops draining is terminated instead of buffered onto', async () => {
     // Own instance: a tiny ceiling so a few large whiteboard frames trip it.
-    const capped = await startHarbor({
+    const capped = await startTestHarbor({
       seedMembers: [
         { id: 'ramnique', displayName: 'Ramnique' },
         { id: 'gagan', displayName: 'Gagan' },
@@ -263,7 +270,7 @@ describe('live face', () => {
 
   it('heartbeat: ping beacons reach every connection, subscribed or not', async () => {
     // Separate instance so the fast cadence doesn't spam the shared harbor.
-    const beating = await startHarbor({
+    const beating = await startTestHarbor({
       seedMembers: [{ id: 'ramnique', displayName: 'Ramnique' }],
       liveHeartbeatMs: 60,
     });

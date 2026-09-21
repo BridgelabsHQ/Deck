@@ -4,7 +4,7 @@ import { SpaceHub } from '../src/hub.js';
 import { PgStore } from '../src/pg-store.js';
 import { HarborService } from '../src/service.js';
 import type { SqlDb } from '../src/sql.js';
-import { pgliteDb } from './pglite.js';
+import { pgliteDb } from '../src/sql-pglite.js';
 
 // Store-level paths the §11 day doesn't walk, exercised on real Postgres
 // through the real service (no HTTP — this is the storage contract, not the
@@ -239,7 +239,7 @@ describe('PgStore through the service', () => {
 
     // The stored message event was redacted in place — replay carries no body —
     // and the message_deleted event narrates with full attribution.
-    const events = await service.eventsAfter(spaceId, 0);
+    const events = await store.listEventsAfter(spaceId, 0);
     const messageEvent = events.find((e) => e.event.type === 'message' && e.event.message.id === messageId)!;
     expect(messageEvent.event).toMatchObject({ message: { body: '', deletedAt: deleted.deletedAt } });
     const deletion = events.find((e) => e.event.type === 'message_deleted')!;
@@ -248,9 +248,9 @@ describe('PgStore through the service', () => {
     });
 
     // Idempotent: re-deleting writes nothing new.
-    const head = await service.headOffset(spaceId);
+    const head = await store.head(spaceId);
     await service.deleteMessage(ram, spaceId, messageId, { actingMode: 'direct' });
-    expect(await service.headOffset(spaceId)).toBe(head);
+    expect(await store.head(spaceId)).toBe(head);
   });
 
   it('polls round-trip through jsonb: definition on the row, votes fold, single-select move, early end', async () => {
@@ -276,7 +276,7 @@ describe('PgStore through the service', () => {
     const ended = await service.endPoll(ram, spaceId, messageId, { actingMode: 'direct' });
     expect(ended.poll?.endedAt).toBeTruthy();
     expect((await store.getMessage(spaceId, messageId))?.poll?.endedAt).toBe(ended.poll?.endedAt);
-    const events = await service.eventsAfter(spaceId, 0);
+    const events = await store.listEventsAfter(spaceId, 0);
     const messageEvent = events.find((e) => e.event.type === 'message' && e.event.message.id === messageId)!;
     expect((messageEvent.event as { message: { poll?: { endedAt?: string } } }).message.poll?.endedAt).toBeUndefined();
     expect(events.some((e) => e.event.type === 'poll_ended')).toBe(true);
@@ -287,7 +287,7 @@ describe('PgStore through the service', () => {
     const deleted = await service.deleteMessage(ram, spaceId, messageId, { actingMode: 'direct' });
     expect(deleted.poll).toBeUndefined();
     expect(await store.listPollVotesForMessages(spaceId, [messageId])).toEqual([]);
-    const redacted = (await service.eventsAfter(spaceId, 0)).find(
+    const redacted = (await store.listEventsAfter(spaceId, 0)).find(
       (e) => e.event.type === 'message' && e.event.message.id === messageId,
     )!;
     expect((redacted.event as { message: { poll?: unknown } }).message.poll).toBeUndefined();
@@ -302,5 +302,34 @@ describe('PgStore through the service', () => {
     expect(await store.getMemberByIdentity('https://other.example', 'sub-1')).toBeUndefined();
     await store.putIdentity(iss, 'sub-1', 'gagan');
     expect((await store.getMemberByIdentity(iss, 'sub-1'))?.id).toBe('gagan');
+  });
+});
+
+describe('migration 022 — hygiene', () => {
+  it('the enum-shaped columns refuse values the code never writes', async () => {
+    await expect(
+      db.query(`insert into spaces (org_id, id, name, created_at, kind) values ('org-default', '01HZCHECK00000000000000000', 'x', '2026-01-01T00:00:00.000Z', 'weird')`),
+    ).rejects.toThrow(/spaces_kind_check/);
+    await expect(db.query(`insert into push_prefs (org_id, member_id, level) values ('org-default', 'x', 'loud')`)).rejects.toThrow(/push_prefs_level_check/);
+    await expect(db.query(`update members set role = 'owner' where id = 'ramnique'`)).rejects.toThrow(/members_role_check/);
+  });
+
+  it('author_member_id is the author, computed by the database on every row', async () => {
+    const rows = await db.query<{ n: number; drift: number }>(
+      `select count(*)::int as n, count(*) filter (where author_member_id <> author->>'memberId')::int as drift from messages`,
+    );
+    expect(rows[0]!.n).toBeGreaterThan(0);
+    expect(rows[0]!.drift).toBe(0);
+    // Nothing may write it — the column is the expression, not a field.
+    await expect(db.query(`update messages set author_member_id = 'someone-else'`)).rejects.toThrow(/can only be updated to DEFAULT/);
+  });
+
+  it('activity seen marks are org-scoped: the same member id in two orgs keeps two marks', async () => {
+    const alpha = new PgStore(db, 'org-alpha');
+    const beta = new PgStore(db, 'org-beta');
+    expect(await alpha.advanceActivitySeenAt('shared-id', '2026-09-21T10:00:00.000Z')).toBe('2026-09-21T10:00:00.000Z');
+    expect(await beta.getActivitySeenAt('shared-id')).toBeUndefined();
+    expect(await beta.advanceActivitySeenAt('shared-id', '2026-09-21T09:00:00.000Z')).toBe('2026-09-21T09:00:00.000Z');
+    expect(await alpha.getActivitySeenAt('shared-id')).toBe('2026-09-21T10:00:00.000Z');
   });
 });

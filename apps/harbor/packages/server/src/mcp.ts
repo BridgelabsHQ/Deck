@@ -4,10 +4,10 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { mcpTools, NewPoll, type ActingMode, type ActivityItem, type ActivityKind, type SearchKind, relabelMentions, type Message } from '@rowboat/spaces-protocol';
 import { z } from 'zod';
-import type { AuthDriver } from './auth.js';
+import { authenticateRequest, wwwAuthenticate, type OrgAuth } from './auth.js';
 import { HarborError } from './errors.js';
+import { publicOriginOf } from './origin.js';
 import type { ActorCtx, HarborService } from './service.js';
-import type { Store } from './store.js';
 
 // The agent face (CONTRACT.md decision 5): the protocol tools served over
 // MCP streamable HTTP at /mcp. Every call is attributed as the token's member;
@@ -23,8 +23,7 @@ import type { Store } from './store.js';
 
 interface Deps {
   service: HarborService;
-  store: Store;
-  auth: AuthDriver;
+  auth: OrgAuth;
 }
 
 interface McpActor {
@@ -36,8 +35,7 @@ interface McpActor {
 export async function handleMcpRequest(req: IncomingMessage, res: ServerResponse, deps: Deps): Promise<void> {
   let actor: McpActor;
   try {
-    const identity = await deps.auth.authenticate(req.headers.authorization);
-    const member = await deps.auth.resolveMember(deps.store, identity);
+    const { member } = await authenticateRequest(deps.auth, { authorization: req.headers.authorization });
     actor = {
       memberId: member.id,
       actingMode: req.headers['x-acting-mode'] === 'scheduled' ? 'scheduled' : 'agent',
@@ -47,18 +45,14 @@ export async function handleMcpRequest(req: IncomingMessage, res: ServerResponse
     const e = err instanceof HarborError ? err : new HarborError('unauthorized', 'unauthorized');
     const headers: Record<string, string> = { 'content-type': 'application/json' };
     // RFC 9728: MCP clients discover the OAuth dance from this header.
-    if (e.code === 'unauthorized' && deps.auth.metadata?.()) {
-      const proto = typeof req.headers['x-forwarded-proto'] === 'string' ? req.headers['x-forwarded-proto'] : 'http';
-      headers['WWW-Authenticate'] =
-        `Bearer resource_metadata="${proto}://${req.headers.host}/.well-known/oauth-protected-resource"`;
-    }
+    if (e.code === 'unauthorized' && deps.auth.metadata()) headers['WWW-Authenticate'] = wwwAuthenticate(publicOriginOf(req));
     res.writeHead(e.status, headers).end(
       JSON.stringify({ jsonrpc: '2.0', error: { code: -32001, message: e.message }, id: null }),
     );
     return;
   }
 
-  const server = buildMcpServer(deps.service, deps.store, actor);
+  const server = buildMcpServer(deps.service, actor);
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
     enableJsonResponse: true,
@@ -80,7 +74,7 @@ export async function handleMcpRequest(req: IncomingMessage, res: ServerResponse
   }
 }
 
-function buildMcpServer(service: HarborService, store: Store, actor: McpActor): Server {
+function buildMcpServer(service: HarborService, actor: McpActor): Server {
   const server = new Server({ name: 'harbor-stub', version: '0.0.1' }, { capabilities: { tools: {} } });
 
   server.setRequestHandler(ListToolsRequestSchema, () => ({
@@ -101,7 +95,7 @@ function buildMcpServer(service: HarborService, store: Store, actor: McpActor): 
       );
     }
     try {
-      const result = await dispatch(service, store, actor, request.params.name, parsed.data);
+      const result = await dispatch(service, actor, request.params.name, parsed.data);
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }],
         structuredContent: result as Record<string, unknown>,
@@ -124,7 +118,6 @@ function errorResult(text: string) {
 
 async function dispatch(
   service: HarborService,
-  store: Store,
   actor: McpActor,
   name: string,
   args: unknown,
@@ -139,10 +132,8 @@ async function dispatch(
   switch (name) {
     // --- identity & people --------------------------------------------------
     case 'whoami': {
-      // The same row /v1/me serves — the member the auth driver resolved.
-      const member = await store.getMember(actor.memberId);
-      if (!member) throw new HarborError('not_found', 'member not found');
-      return { member, org: { name: service.org.name, address: service.org.address } };
+      // The same row /v1/me serves.
+      return { member: await service.me(ctx), org: { name: service.org.name, address: service.org.address } };
     }
     case 'list_members': {
       const a = args as { spaceId?: string };

@@ -1,24 +1,19 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { ChangeSet, CreateAssetResult, ProposeChangeResult, ReadAssetResult } from '@rowboat/spaces-protocol';
-import { PgStore } from '../src/pg-store.js';
-import { startHarbor, type HarborOptions, type RunningHarbor } from '../src/server.js';
-import type { SqlDb } from '../src/sql.js';
-import { pgliteDb } from './pglite.js';
-import { agentClient, callStructured, liveClient, restClient, type LiveClient } from './helpers.js';
+import type { RunningHarbor } from '../src/server.js';
+import { agentClient, callStructured, liveClient, restClient, startTestHarbor, type LiveClient } from './helpers.js';
 
 // Spec §11's acceptance scenario, run as code. The narrative is the QA script;
 // each `it` is one beat of the Roadboard day. Beats share state on purpose —
 // the day is one continuous story, and the log at the end must tell all of it.
 //
-// The whole day runs TWICE — against the in-memory store and against Postgres
-// (in-process PGlite). This is the stub→real storage swap gate: same contract,
-// same story, byte-identical assertions.
+// Runs on the production SQL (Postgres in-process, PGlite) like every test;
+// until 2026-09-21 it also ran on the memory driver as the storage-swap gate.
 
 let harbor: RunningHarbor;
 let spaceId: string;
 let roadmapId: string; // roadmap.md's asset id — born in beat 1, named by id ever after
-let sqlDb: SqlDb | undefined;
 
 // The five, as REST clients (humans at the app)...
 let ramnique: ReturnType<typeof restClient>;
@@ -50,8 +45,8 @@ const ROADMAP_V1 = `# Roadmap
 const GAGAN_LINE = '- 08-14 gagan: importer fix shipped; next webhook retries';
 const PRAKHAR_LINE = '- 08-14 prakhar: docs revamp underway';
 
-async function startForStore(kind: 'memory' | 'postgres'): Promise<void> {
-  const options: HarborOptions = {
+async function start(): Promise<void> {
+  harbor = await startTestHarbor({
     orgName: 'Rowboat Labs',
     seedMembers: [
       { id: 'ramnique', displayName: 'Ramnique' },
@@ -60,14 +55,7 @@ async function startForStore(kind: 'memory' | 'postgres'): Promise<void> {
       { id: 'gagan', displayName: 'Gagan' },
       { id: 'prakhar', displayName: 'Prakhar' },
     ],
-  };
-  if (kind === 'postgres') {
-    sqlDb = await pgliteDb();
-    const store = new PgStore(sqlDb);
-    await store.init();
-    options.store = store;
-  }
-  harbor = await startHarbor(options);
+  });
   ramnique = restClient(harbor, 'dev-ramnique');
   arjun = restClient(harbor, 'dev-arjun');
   harsh = restClient(harbor, 'dev-harsh');
@@ -83,15 +71,13 @@ async function stopHarbor(): Promise<void> {
   arjunOpenDoc?.close();
   await Promise.all([ramniqueAgent, gaganAgent, prakharAgent, ramniqueCron].map((c) => c?.close()));
   await harbor.close();
-  await sqlDb?.close();
-  sqlDb = undefined;
   arjunLastSeen = 0;
   roadmapId = '';
 }
 
-describe.each([['memory'], ['postgres']] as const)('§11 — a day in the life of Roadboard (%s store)', (storeKind) => {
+describe('§11 — a day in the life of Roadboard', () => {
   beforeAll(async () => {
-    await startForStore(storeKind);
+    await start();
   });
 
   afterAll(async () => {
@@ -122,9 +108,9 @@ describe.each([['memory'], ['postgres']] as const)('§11 — a day in the life o
   });
 
   it('beat 2 — standup: everyone captures privately; nothing shared happens', async () => {
-    const head = await harbor.service.headOffset(spaceId);
+    const head = await harbor.store.head(spaceId);
     // (five private notes are taken, none of them here)
-    expect(await harbor.service.headOffset(spaceId)).toBe(head);
+    expect(await harbor.store.head(spaceId)).toBe(head);
   });
 
   it('beat 3 — first push: Gagan\'s agent reads (history bundled), applies one change-set with reasoning', async () => {
@@ -148,7 +134,7 @@ describe.each([['memory'], ['postgres']] as const)('§11 — a day in the life o
     expect(push.version).toBe(2);
 
     // The feed shows the activity row: the change is a durable event on the log.
-    const events = await harbor.service.eventsAfter(spaceId, 0);
+    const events = await harbor.store.listEventsAfter(spaceId, 0);
     const changes = events.filter((e) => e.event.type === 'change');
     expect(changes.at(-1)!.event).toMatchObject({
       type: 'change',
@@ -218,7 +204,7 @@ describe.each([['memory'], ['postgres']] as const)('§11 — a day in the life o
 
   it('beat 6 — direct manipulation: Harsh ticks the checkbox; Arjun, doc open, sees it live', async () => {
     arjunOpenDoc = await liveClient(harbor, 'dev-arjun');
-    const head = await harbor.service.headOffset(spaceId);
+    const head = await harbor.store.head(spaceId);
     arjunOpenDoc.send({ kind: 'subscribe', spaceId, afterOffset: head });
     await arjunOpenDoc.until((fs) => fs.some((f) => f.kind === 'subscribed'), 'arjun subscribed');
 
@@ -244,7 +230,7 @@ describe.each([['memory'], ['postgres']] as const)('§11 — a day in the life o
   });
 
   it('beat 7 — chat grammar: a thread starts flat in the stream, agents stay silent, @rowboat runs only for its own person', async () => {
-    const headBefore = await harbor.service.headOffset(spaceId);
+    const headBefore = await harbor.store.head(spaceId);
 
     const started = await arjun.post(`/v1/spaces/${spaceId}/messages`, {
       body: 'should SSO jump the migration work?',
@@ -261,7 +247,7 @@ describe.each([['memory'], ['postgres']] as const)('§11 — a day in the life o
     expect(replied.body.message.threadRoot).toBe(rootId);
 
     // Agents were silent so far: everything since the topic started is direct.
-    const midEvents = await harbor.service.eventsAfter(spaceId, headBefore);
+    const midEvents = await harbor.store.listEventsAfter(spaceId, headBefore);
     for (const e of midEvents) {
       if (e.event.type === 'message') expect(e.event.message.author.actingMode).toBe('direct');
       expect(e.event.type).not.toBe('change');
@@ -314,7 +300,7 @@ describe.each([['memory'], ['postgres']] as const)('§11 — a day in the life o
   it('beat 9 — catch-up: resume-from-offset replays exactly what Arjun missed; history answers "why"', async () => {
     const catchUp = await liveClient(harbor, 'dev-arjun');
     catchUp.send({ kind: 'subscribe', spaceId, afterOffset: arjunLastSeen });
-    const head = await harbor.service.headOffset(spaceId);
+    const head = await harbor.store.head(spaceId);
     await catchUp.until((fs) => fs.filter((f) => f.kind === 'event').length >= head - arjunLastSeen, 'overnight replay');
 
     const replay = catchUp.events();
