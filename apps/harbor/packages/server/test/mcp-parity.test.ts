@@ -1,20 +1,16 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { mcpTools, type Member, type Message, type Space } from '@rowboat/spaces-protocol';
-import { PgStore } from '../src/pg-store.js';
-import { startHarbor, type HarborOptions, type RunningHarbor } from '../src/server.js';
-import type { SqlDb } from '../src/sql.js';
-import { agentClient, restClient } from './helpers.js';
-import { pgliteDb } from './pglite.js';
+import type { RunningHarbor } from '../src/server.js';
+import { agentClient, restClient, startTestHarbor } from './helpers.js';
 
 // Agent-face parity (2026-09-09): every member operation the render face has
 // is projected as an MCP tool, and an agent's act IS the member's act,
-// attributed by mode. Through a real MCP client, on both stores. Every
+// attributed by mode. Through a real MCP client. Every
 // structured output is checked against the tool's own output schema so the
 // projection cannot drift from the protocol contract.
 
 let harbor: RunningHarbor;
-let sqlDb: SqlDb | undefined;
 let spaceId: string;
 let dmWithGagan: string;
 let ramnique: ReturnType<typeof restClient>;
@@ -40,8 +36,8 @@ async function refused(client: Client, name: string, args: Record<string, unknow
   return JSON.parse((result.content as Array<{ text: string }>)[0]!.text) as { code: string; message: string };
 }
 
-async function startForStore(kind: 'memory' | 'postgres'): Promise<void> {
-  const options: HarborOptions = {
+async function start(): Promise<void> {
+  harbor = await startTestHarbor({
     orgName: 'Rowboat Labs',
     seedMembers: [
       { id: 'ramnique', displayName: 'Ramnique' },
@@ -49,14 +45,7 @@ async function startForStore(kind: 'memory' | 'postgres'): Promise<void> {
       { id: 'gagan', displayName: 'Gagan' },
       { id: 'loner', displayName: 'Loner' }, // shares no space with anyone
     ],
-  };
-  if (kind === 'postgres') {
-    sqlDb = await pgliteDb();
-    const store = new PgStore(sqlDb);
-    await store.init();
-    options.store = store;
-  }
-  harbor = await startHarbor(options);
+  });
   ramnique = restClient(harbor, 'dev-ramnique');
   gagan = restClient(harbor, 'dev-gagan');
   const harsh = restClient(harbor, 'dev-harsh');
@@ -70,17 +59,15 @@ async function startForStore(kind: 'memory' | 'postgres'): Promise<void> {
   harshAgent = await agentClient(harbor, 'dev-harsh', { agentName: 'Claude' });
 }
 
-describe.each([['memory'], ['postgres']] as const)('agent face parity (%s store)', (storeKind) => {
+describe('agent face parity', () => {
   beforeAll(async () => {
-    await startForStore(storeKind);
+    await start();
   });
 
   afterAll(async () => {
     await ramAgent.close();
     await harshAgent.close();
     await harbor.close();
-    await sqlDb?.close();
-    sqlDb = undefined;
   });
 
   it("whoami is the token's member — the same row /v1/me serves — plus the org's name and address", async () => {
@@ -154,12 +141,12 @@ describe.each([['memory'], ['postgres']] as const)('agent face parity (%s store)
 
     const renamed = await call<{ space: Space }>(harshAgent, 'rename_space', { spaceId: id, name: 'Agent-made (v2)' });
     expect(renamed.space).toMatchObject({ id, name: 'Agent-made (v2)' });
-    const events = await harbor.service.eventsAfter(id, 0);
+    const events = await harbor.store.listEventsAfter(id, 0);
     const rename = events.find((e) => e.event.type === 'space_renamed')!;
     expect((rename.event as any).by).toEqual({ memberId: 'harsh', actingMode: 'agent', agentName: 'Claude' });
     // Identical name: no-op, no second event.
     await call<{ space: Space }>(harshAgent, 'rename_space', { spaceId: id, name: 'Agent-made (v2)' });
-    expect((await harbor.service.eventsAfter(id, 0)).filter((e) => e.event.type === 'space_renamed')).toHaveLength(1);
+    expect((await harbor.store.listEventsAfter(id, 0)).filter((e) => e.event.type === 'space_renamed')).toHaveLength(1);
 
     // Non-members cannot rename.
     expect((await refused(ramAgent, 'rename_space', { spaceId: id, name: 'Nope' })).code).toBe('forbidden');
@@ -202,7 +189,7 @@ describe.each([['memory'], ['postgres']] as const)('agent face parity (%s store)
     const edited = await call<{ message: Message }>(ramAgent, 'edit_message', { spaceId, messageId, body: 'the quicker fix' });
     expect(edited.message).toMatchObject({ id: messageId, body: 'the quicker fix' });
     expect(edited.message.editedAt).toBeTruthy();
-    const events = await harbor.service.eventsAfter(spaceId, 0);
+    const events = await harbor.store.listEventsAfter(spaceId, 0);
     const edit = events.find((e) => e.event.type === 'message_edited')!;
     expect((edit.event as any).edit.by).toEqual({ memberId: 'ramnique', actingMode: 'agent', agentName: 'Rowboat' });
 
@@ -220,12 +207,12 @@ describe.each([['memory'], ['postgres']] as const)('agent face parity (%s store)
     const messageId = posted.messageId;
     const added = await call<{ message: Message }>(ramAgent, 'react', { spaceId, messageId, emoji: '🎉', action: 'add' });
     expect(added.message.reactions).toEqual([{ emoji: '🎉', memberIds: ['ramnique'], lastOffset: expect.any(Number) }]);
-    const events = await harbor.service.eventsAfter(spaceId, 0);
+    const events = await harbor.store.listEventsAfter(spaceId, 0);
     const reaction = events.filter((e) => e.event.type === 'reaction').at(-1)!;
     expect((reaction.event as any).reaction.by).toEqual({ memberId: 'ramnique', actingMode: 'agent', agentName: 'Rowboat' });
     // Re-adding is a no-op; the render face sees the same fold.
     await call<{ message: Message }>(ramAgent, 'react', { spaceId, messageId, emoji: '🎉', action: 'add' });
-    expect((await harbor.service.eventsAfter(spaceId, 0)).filter((e) => e.event.type === 'reaction')).toHaveLength(events.filter((e) => e.event.type === 'reaction').length);
+    expect((await harbor.store.listEventsAfter(spaceId, 0)).filter((e) => e.event.type === 'reaction')).toHaveLength(events.filter((e) => e.event.type === 'reaction').length);
     const removed = await call<{ message: Message }>(ramAgent, 'react', { spaceId, messageId, emoji: '🎉', action: 'remove' });
     expect(removed.message.reactions).toEqual([]);
     // A tombstone takes no new reactions.
@@ -262,7 +249,7 @@ describe.each([['memory'], ['postgres']] as const)('agent face parity (%s store)
     const ended = await call<{ message: Message }>(ramAgent, 'end_poll', { spaceId, messageId });
     expect(ended.message.poll?.endedAt).toBeTruthy();
     expect(ended.message.poll?.votes).toEqual([{ answerId: 2, memberIds: ['harsh'] }]);
-    const events = await harbor.service.eventsAfter(spaceId, 0);
+    const events = await harbor.store.listEventsAfter(spaceId, 0);
     const end = events.find((e) => e.event.type === 'poll_ended')!;
     expect((end.event as any).end.by).toEqual({ memberId: 'ramnique', actingMode: 'agent', agentName: 'Rowboat' });
     // Sealed: no more votes; ending again is a no-op.
