@@ -8,18 +8,16 @@ import {
 /**
  * Menu bar / system tray presence (Granola-style resident app).
  *
- * The icon is the app glyph pre-rendered as a macOS "template" image
- * (pure black + alpha, derived from icons/icon.png: alpha = pixel
- * luminance, so the white sail becomes an opaque black shape and the
- * black rounded square becomes transparent). Embedded as base64 so the
+ * The icon is the Deck catamaran glyph pre-rendered as a macOS "template" image
+ * (pure black + alpha). Embedded as base64 so the
  * tray never depends on asset paths that differ between dev and
  * packaged layouts. Template rendering makes macOS tint it correctly
  * in light/dark menu bars and while highlighted.
  */
 const TRAY_ICON_18 =
-  "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAABRElEQVR4nKySMS9EQRSF7773REEUlFpRiEg0Oj1RqTQqCiLRKNV+gkLvF5CoJRqJPyBEqyMURJB9zzl5Z3bvTuZtdjdu8mVm7sw9c+fOzWw0a4HMO3Ib3DJRaV0NK5QrqHLBM2AB/IAvOgrrn0EJ2pqvgg2N82AarIBX7jcJtSQyCXbALliKzryDJ83LIiEQnrAFTsBcOOxg3CN4C4FFQmQCnINN+b/BmPZDvTi/0T597SwS4dtvwTK4VPrj1mu5zl9oXQWBMDKTfXAPruSfBcfgwOqi03j5A1h0vo5QJ0W3Dr9GOwN7eiYzPASn/owXSgmEBmTfsLhT4NnqHvqMg2IrozkvewHXyvpIIj2xqYyajJncWf2bPuvGjFL76+ADbFu3WW0YIdaHvcYfWrOoLt4GeVquC3+t228jCfmzVb/b/sX+AAAA//+fzjrgAAAABklEQVQDAHsTRGNUkus5AAAAAElFTkSuQmCC";
+  "iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABnElEQVQ4jZXSTauNURjG8R/J+8vhOPY5nNd9znFskaEiSklRhpSZLyApdQZeytjIQFEiZoSUMmLElA+gDHwT3du19LRH9lNXa617rf/1XM+9Hv4+mzCDNQz+U4fDFPvPpI9jY5gMomKWm9k0jmI1bxlHq2F7ZbSUwkrUna+MQN169/x8M+p3NLqew0EsBOqPaDlnLAZuGmSz5rO4hps4nua2vaZ+zg1jLWZxFldwBntxG1/wEj9wIf1YSsKFsJV4aDCXsd52GReT5Ds+4xZ+xfRIwPlw80k6LB6KZrNxAh/wLeMNfMVP3MVkTBrTa9c/E9XGzqR5ET3EOt7jFZ7n03phKsiUFKY7hvV5d/ARj/EIT/AMn3A/P+KBToCh0VTM2vg2/XjXqU1m/hq/8aZTa/v2p7Ant/IU99LwS+nP1fTtetI9wLkOWzdsX0driVrQ+fwOCzgZ01NJUP/U6Q43IUkmomr0bmzHlmgXtmJzxjrf9oupNMXYlkIdaGrGrd6AUnfd5uVhI3bEtd4+jooptjyGz4ZELedxVEyx/gArAzr4Bv+XLwAAAABJRU5ErkJggg==";
 const TRAY_ICON_36 =
-  "iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAC3klEQVR4nOyYu4sUQRDGa3fm8DgxUxB8ICqKqBj4QBOFMxMDRQUfgS/0D1A0MRQMTA1MxBcngpFmBiocgokgCopo4PnCSE193e74FV11XTtMz+zs9sLB3Qc/drenp/ubrqruuUtpmimlaaYZb6gBmvK9DbKiDoNUU+bIxEClEoqvRIxkOYbBcrAJ7ALzwATlFiVWyDQULYE1F2wE28E2sBYsJr8I58Fjc18UQw2hLYOOgJ1gHxgFSwru+SsmXsnvjjzq1ZA1wgOuBMfBQXJhUbUF7c8akraJWIZ4yVsyEIfhjBgZket6TRPa5mkmbd/AZ9PWk6GGmXAhuABOgTnSPikmmoH79F7+/Rr8IV+BtQ3xJFq2HJpLYkqNJNS5EkXbiVYb65kZt1XXkIZoAbhKLmGtkdRMFNrXMmOA+4zn2qdUtTGqma1gDKwAv2XgtOD+MkOaV5w/XAS/ijqmXZjZA+6QT9ph00erLDGTFpnitkn5fCRmbBpUGtLYHgU3pe0teAKegnVgL7kqI+lrjwlrKh+ue1Si0NPwICfBFXAX3CaXiP9MP16V3eSqbXOFKb32BawmF/ZCNQvaeDDOlWVgvRgbFzOJgSd5QO5YuEyd+5OaUnRzHBMzwTM0lIRD5FcjofBpnZDPIzZ1jnz12Qdk8ZGxBnykgv2nyhDLnthl0oOVjb0AG8itlOYnPxg/4C1wjALJrCp7/agykjfF/b+CI9QZNq2ww+BH1UBNiiPNkYfgHflQtuT7NfCe/KoHFfMFTZN6PthBblU4bLwq+ymwEeYVa4WsXspnW8Y/C75TSSJbDeIlf1Q+eUe/T24PK01kq9gv+fyAb8Aq8IncK+xPudZVkcQKmY6zhfzBeYBc/nQVKlXskJ0Wc4fAc6oRKlWMkOkKLCUXphPgBvmqqz1Yv9K95SL4AK73aiaWIRYfDYvInVO1w0QDMKTqywwr5k5dq5pCGsTf9n1p9h9WVfoPAAD//0eu+ckAAAAGSURBVAMAjdCu7L3gD4wAAAAASUVORK5CYII=";
+  "iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAEGklEQVRYhcWXWWhcVRjHfxqtNs02yZ1pMpPpJGmmrS3iAloQLNQFcaMPrqCi1F3pg0hxe1DrRhX1QQQVxaWipSKWRrFqtYi0qBV98UFFcX1XBBGflHP5HTlObybRmMyB/7l3zvb9v/XcgYNbFzAINIAVwKr/GSs8e0hZbVu/G44G1gCr5wlrlNFUZmHLEhJRm6PmCfH8SC4rskxKZKGxOrVU8ONyJ1Z2CKvkkMfUgANN46cTaMohcKEmy2aHsRKoBkJjDkx2GE3LAeP6by6Y9MC5ntGIFpqYA5rAqIiW/i/nLI+EGlqpFXFRiomC+VBxzwPOBUrGQSQ1/i8Q1i/DbqwAdaDSgrqb45qw9xLgFeAx4FHJZc6na2fCuOfnXaMFdYvV5cAtwK3A1cAxzk0oNIx/CkwBm4H3gT+BrVoqKtuYBcZ0+0GExiwFJwJXAGcA64ELgeOcKwOXAV8BHwN7gE3A3cDvktoGjCRnzprQqJqkaCh4yLsmEDoVOMWN64CPgM+A/cA+4AbgSuAA8B7wK/CIXw7Rve0QZeZdvQCxYF4DXA9cC9wInANsl0wg8gHwIXAVcB3wh3Nv+LxAxWIoTIdlsTBWk7QtQsXsCZp2A3cAnwDvGjN7fG4ENgDfAT8C3wJ7gccVVptBTl0X512tDUbVrmw8BQJvArvF68Au4y1Y4y2zLrjuS117kUrVZ5AzjF21DWqSDoc9IYmdkphS+AsGecjIr4F3DOopA/9ZYOks5IQ1eTfSBjVjIGTZ88CTwDPA08BzwP3AncDFwAMGdLRgUOBVXXeSpaI6jZyq4ZETGm6DCtBrXboJuA24HbgXeNhUD8SeAh6yQIY6dBewxfp0vGdlCi+SMxIJVSRVhLLXwFrgdDU9YFYFzV8EXgZeSrBNN+533V7LxQnedZkEWmUNKy/vKgUIjI+0lvwG/AB8AXxv4JbMuh6xRHT7ofW2e0IM/eQZwYKLE2ukWBq/rYsIRevUFf6NCOn8i8Hbp9/7dWmMj7oEw7Xys0p8Lrl93lllZRQSylyQIsbNJHCf8XKpbjvLzV2uC1X7TG/+I7TQYhNhg+QftLierQLd7m2VGfbkXZYgkglXxW5TOmTXa8DNZsvJ3l27LAHbddFWya2zLoW9O8zKnbpss3tb5ZYtvnk3lCAzBsK1cazvA/6x26TF7vHgtc71+AWw0czaYkU/TQX7LK7nm6nrjcGhFoSx/MBSCwa10hLfBxXapTvC+KG+p+u7TISe5D0KDq5a5L443or8v1n/NJORSPo7S8azgvlU0yx5T+db96XzwZK5NqXENZ1CScvnZhzQUp3EgFw4RP/3dRi9csnb4clgJ9Anh3+0RcmCngVCr8hdVdQOM7AWilC3Mtu24MewKNSKUGfmA+HsIOPvmIntL8fp7GqEuVFMAAAAAElFTkSuQmCC";
 
 interface TrayActions {
   openApp: () => void;
@@ -180,8 +178,8 @@ function rebuildMenu(): void {
           click: () => actions?.toggleMeetingNotes(),
         },
     { type: "separator" },
-    { label: "Quit Rowboat", click: () => app.quit() },
+    { label: "Quit Deck", click: () => app.quit() },
   ]);
   tray.setContextMenu(menu);
-  tray.setToolTip(recording ? "Rowboat — recording meeting" : "Rowboat");
+  tray.setToolTip(recording ? "Deck — recording meeting" : "Deck");
 }
