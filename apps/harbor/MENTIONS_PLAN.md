@@ -91,7 +91,7 @@ Three layers, everywhere:
   mention syntax.
 
 GitHub and Mattermost store plain `@login` and resolve server-side; that
-only works with unique, stable handles, which Rowboat member ids are not.
+only works with unique, stable handles, which Deck member ids are not.
 
 ## Decisions
 
@@ -113,7 +113,7 @@ only works with unique, stable handles, which Rowboat member ids are not.
   into `member` + the bare id. (Moot once the index is app-computed, but the
   form should not fight the tokenizer anyway.)
 - **The name stays in the label** (Zulip's choice, not Slack's) because
-  Rowboat's raw markdown has first-class readers: the user's agent catches up
+  Deck's raw markdown has first-class readers: the user's agent catches up
   on threads via MCP, people see raw text in the edit box and exports, and a
   departed member (no longer in the roster) would otherwise render as a bare
   ULID everywhere.

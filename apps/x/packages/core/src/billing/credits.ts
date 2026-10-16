@@ -288,10 +288,10 @@ export async function claimReferralCode(rawCode: string): Promise<ReferralClaimR
   try {
     const code = rawCode.trim();
     if (!code) return { ok: false, message: 'Enter an invite code.' };
-    if (!(await isSignedIn())) return { ok: false, message: 'Sign in to Rowboat to use an invite code.' };
+    if (!(await isSignedIn())) return { ok: false, message: 'Sign in to Deck to use an invite code.' };
     const accessToken = await getAccessToken();
     const userId = userIdFromToken(accessToken);
-    if (!userId) return { ok: false, message: 'Sign in to Rowboat to use an invite code.' };
+    if (!userId) return { ok: false, message: 'Sign in to Deck to use an invite code.' };
     if (readClaimedStore()[userId]?.[REFERRAL_CLAIMED_KEY]) {
       return { ok: false, message: 'This account has already used an invite code.' };
     }

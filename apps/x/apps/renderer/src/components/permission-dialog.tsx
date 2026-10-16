@@ -28,17 +28,17 @@ const COPY: Record<
 > = {
   microphone: {
     icon: Mic,
-    title: 'Rowboat needs microphone access',
+    title: 'Deck needs microphone access',
     body:
-      `Voice input is off because ${OS} is blocking the microphone for Rowboat. ` +
+      `Voice input is off because ${OS} is blocking the microphone for Deck. ` +
       `Enable it under ${MIC_PATH}, then try again.`,
     section: 'microphone',
   },
   camera: {
     icon: Video,
-    title: 'Rowboat needs camera access',
+    title: 'Deck needs camera access',
     body:
-      `Video calls are off because ${OS} is blocking the camera for Rowboat. ` +
+      `Video calls are off because ${OS} is blocking the camera for Deck. ` +
       `Enable it under ${CAM_PATH}, then start the call again.`,
     section: 'camera',
   },
@@ -49,15 +49,15 @@ const COPY: Record<
   // and the button is hidden below to match).
   'screen-recording': {
     icon: MonitorUp,
-    title: 'Rowboat can’t see your screen',
+    title: 'Deck can’t see your screen',
     body: isMac
       ? 'macOS is blocking Screen Recording, so the assistant would only see black frames. ' +
-        'Enable Rowboat under System Settings → Privacy & Security → Screen Recording, then ' +
-        'relaunch Rowboat. If Rowboat is already enabled there, toggle it off and on — an ' +
+        'Enable Deck under System Settings → Privacy & Security → Screen Recording, then ' +
+        'relaunch Deck. If Deck is already enabled there, toggle it off and on — an ' +
         'updated app needs a fresh grant — and relaunch.'
       : 'Screen capture didn’t start, so the assistant can’t see your screen. If you ' +
         'dismissed the picker, just try sharing again. If it keeps failing, restart ' +
-        'Rowboat — the call carries on fine without sharing.',
+        'Deck — the call carries on fine without sharing.',
     section: 'screen-recording',
   },
   // Input Monitoring is macOS-only: nothing gates a global key hook on
@@ -67,9 +67,9 @@ const COPY: Record<
     title: 'Enable push-to-talk from any app',
     body:
       `Hold ${pttKey.pttKeyLabelCap(isMac)} to talk during a call — even while you’re in ` +
-      'another app. For Rowboat to see that key outside its own window, macOS requires ' +
+      'another app. For Deck to see that key outside its own window, macOS requires ' +
       'the Input Monitoring permission. Without it, push-to-talk still works while ' +
-      'Rowboat is focused.',
+      'Deck is focused.',
     section: 'input-monitoring',
   },
 }
@@ -130,7 +130,7 @@ export function PermissionDialog({
                   className="w-full"
                   onClick={() => void window.ipc.invoke('app:relaunch', null).catch(() => {})}
                 >
-                  Relaunch Rowboat
+                  Relaunch Deck
                 </Button>
               )}
               {kind === 'input-monitoring' && onRetry && (

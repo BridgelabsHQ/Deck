@@ -206,10 +206,10 @@ export function buildHttpApp(deps: {
   const landing = (target: URLSearchParams) => {
     target.set('org', service.org.address);
     const deep = `rowboat://open?type=spaces&${target.toString()}`;
-    return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Open in Rowboat</title>` +
+    return `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Open in Deck</title>` +
       `<style>body{font:15px/1.5 system-ui,sans-serif;margin:0;display:grid;place-items:center;min-height:100vh;color:#222;background:#fafafa}` +
       `main{text-align:center;padding:2rem}a.b{display:inline-block;margin-top:1rem;padding:.6rem 1.1rem;border-radius:8px;background:#111;color:#fff;text-decoration:none}</style>` +
-      `<main><p>This link opens in Rowboat.</p><a class="b" href="${deep}">Open in Rowboat</a></main>` +
+      `<main><p>This link opens in Deck.</p><a class="b" href="${deep}">Open in Deck</a></main>` +
       `<script>location.replace(${JSON.stringify(deep)})</script>`;
   };
   app.get('/', (c) => c.html(landing(new URLSearchParams())));
@@ -521,8 +521,8 @@ function invitePage(page: InvitePage): string {
   return (
     `${head}<title>Join ${escapeHtml(page.space)} on ${escapeHtml(page.org)}</title>${style}<main>` +
     `<h1>You're invited to ${escapeHtml(page.space)}</h1><p class="m">on ${escapeHtml(page.org)}</p>${by}` +
-    `<a class="b" href="${page.deep}">Open in Rowboat</a>` +
-    `<p class="s">Don't have Rowboat? <a href="${DOWNLOAD_URL}">Download it</a>, then open this link again.</p></main>` +
+    `<a class="b" href="${page.deep}">Open in Deck</a>` +
+    `<p class="s">Don't have Deck? <a href="${DOWNLOAD_URL}">Download it</a>, then open this link again.</p></main>` +
     `<script>location.replace(${JSON.stringify(page.deep)})</script>`
   );
 }

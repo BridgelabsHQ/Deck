@@ -2374,7 +2374,7 @@ function App() {
         .then((s) => s.accelerator)
         .catch(() => quickAskShortcut.DEFAULT_QUICK_ASK_SHORTCUT)
       playPopCue()
-      toast('Ask Rowboat from anywhere', {
+      toast('Ask Deck from anywhere', {
         description: `Press ${quickAskShortcut.formatShortcut(accelerator, isMac)} in any app to summon your Skipper — talk or type, the answer shows up right there.`,
         duration: 12000,
         closeButton: true,
@@ -5749,7 +5749,7 @@ function App() {
     void window.ipc.invoke('app:consumeUpdateInfo', null).then(({ version, updatedFrom }) => {
       if (!updatedFrom) return
       toast(`Updated to v${version}`, {
-        description: `Rowboat was updated from v${updatedFrom}.`,
+        description: `Deck was updated from v${updatedFrom}.`,
         action: {
           label: "What's new",
           onClick: () => window.open(`https://github.com/rowboatlabs/rowboat/releases/tag/v${version}`, '_blank'),
@@ -5786,7 +5786,7 @@ function App() {
     if (reason === 'failed') return
     toast('Hover mode needs voice', {
       description:
-        'Sign in to Rowboat — or add your own Deepgram and ElevenLabs keys — to talk to your Skipper.',
+        'Sign in to Deck — or add your own Deepgram and ElevenLabs keys — to talk to your Skipper.',
       duration: 8000,
       action: { label: 'Open settings', onClick: () => setVoiceSetupOpen(true) },
     })
@@ -7763,7 +7763,7 @@ function App() {
                   <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
                     <FolderOpen className="size-9 text-muted-foreground" />
                     <h1 className="text-xl font-semibold">{selectedProject?.name ?? 'Projects'}</h1>
-                    <p className="max-w-sm text-sm text-muted-foreground">{selectedProject ? 'Choose a chat or file in the rail, or start a new conversation with Rowboat.' : 'Choose a project in the rail, or create one to organize your chats and local files.'}</p>
+                    <p className="max-w-sm text-sm text-muted-foreground">{selectedProject ? 'Choose a chat or file in the rail, or start a new conversation with Deck.' : 'Choose a project in the rail, or create one to organize your chats and local files.'}</p>
                     {selectedProject && <Button onClick={() => void newProjectChat(selectedProject).catch((e) => toast.error(String(e)))}><Plus className="mr-2 size-4" />New chat</Button>}
                   </div>
                 </div>
@@ -8277,8 +8277,8 @@ function App() {
             <DialogTitle>Old chats are cleaned up automatically</DialogTitle>
             <DialogDescription className="pt-1 leading-relaxed">
               {retentionNotice?.chatDays != null
-                ? `To save disk space, Rowboat now deletes chats that have been inactive for ${retentionNotice.chatDays}+ days, along with old background-task transcripts.`
-                : 'To save disk space, Rowboat now deletes old background-task transcripts.'}
+                ? `To save disk space, Deck now deletes chats that have been inactive for ${retentionNotice.chatDays}+ days, along with old background-task transcripts.`
+                : 'To save disk space, Deck now deletes old background-task transcripts.'}
               {' '}Notes and files created by agents are never touched. Cleanup starts from the next launch, and you can change or turn this off anytime.
             </DialogDescription>
           </DialogHeader>
@@ -8376,14 +8376,14 @@ function App() {
           <DialogHeader>
             <DialogTitle>Screen recording permission required</DialogTitle>
             <DialogDescription>
-              Rowboat needs <strong>Screen Recording</strong> permission to capture meeting audio from other apps (Zoom, Meet, etc.). This feature won't work without it.
+              Deck needs <strong>Screen Recording</strong> permission to capture meeting audio from other apps (Zoom, Meet, etc.). This feature won't work without it.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>To enable this:</p>
             <ol className="list-decimal list-inside space-y-1.5">
               <li>Open <strong>System Settings</strong> → <strong>Privacy & Security</strong> → <strong>Screen Recording</strong></li>
-              <li>Toggle on <strong>Rowboat</strong></li>
+              <li>Toggle on <strong>Deck</strong></li>
               <li>You may need to restart the app after granting permission</li>
             </ol>
           </div>

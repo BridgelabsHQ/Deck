@@ -166,7 +166,7 @@ export function ProvidersSection({ dialogOpen, variant = "settings" }: {
       <div className="space-y-2">
         {cards.length === 0 && (
           <div className="rounded-md border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
-            Connect Rowboat, use your own API key, or choose a local provider to start using the Assistant.
+            Connect Deck, use your own API key, or choose a local provider to start using the Assistant.
           </div>
         )}
         {cards.map((c) => (
@@ -302,7 +302,7 @@ function AddProviderDialog({ open, onOpenChange, connectedIds, isRowboatConnecte
     if (!isRowboatConnected) {
       entries.push({
         id: "rowboat",
-        name: "Rowboat",
+        name: "Deck",
         tagline: "Included with your plan",
         icon: null,
         onChoose: () => {
@@ -448,7 +448,7 @@ function AddProviderDialog({ open, onOpenChange, connectedIds, isRowboatConnecte
         {step.kind === "choose" && (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">
-              Connect Rowboat, add your own API key, or run models locally. Each provider&apos;s models appear alongside the others in every picker.
+              Connect Deck, add your own API key, or run models locally. Each provider&apos;s models appear alongside the others in every picker.
             </p>
             <div className="grid grid-cols-2 gap-2">
               {chooseEntries.map((e) => (
@@ -739,8 +739,8 @@ function ManageProviderDialog({ card, usedBy, onClose, onRefreshModels }: {
               <div className="flex items-center justify-between gap-3">
                 <span className="text-xs text-muted-foreground">
                   {card.flavor === "rowboat"
-                    ? "Sign out of your Rowboat account."
-                    : `Remove ${card.name} and its models from Rowboat.`}
+                    ? "Sign out of your Deck account."
+                    : `Remove ${card.name} and its models from Deck.`}
                 </span>
                 <Button variant="outline" size="sm" className="text-destructive" onClick={() => setConfirmDisconnect(true)}>
                   Disconnect
@@ -752,7 +752,7 @@ function ManageProviderDialog({ card, usedBy, onClose, onRefreshModels }: {
                 <p className="text-xs text-muted-foreground">
                   {usedBy.length > 0
                     ? `${usedBy.length} model selection${usedBy.length === 1 ? "" : "s"} use${usedBy.length === 1 ? "s" : ""} this provider. Task overrides will reset to the Assistant model${assistantAffected ? ", and you'll need to pick a new Assistant model" : ""}.`
-                    : "Its models will no longer be available in Rowboat."}
+                    : "Its models will no longer be available in Deck."}
                 </p>
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" size="sm" onClick={() => setConfirmDisconnect(false)}>
