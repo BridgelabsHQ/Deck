@@ -314,13 +314,13 @@ export async function ensureRowboatSession(): Promise<void> {
       if (event.provider !== 'rowboat' || event.success) return;
       unsubscribe();
       rowboatSpacesWaiter = null;
-      reject(new Error(event.error ?? 'Rowboat sign-in failed'));
+      reject(new Error(event.error ?? 'Deck sign-in failed'));
     });
   });
   const started = await connectProvider('rowboat');
   if (!started.success) {
     rowboatSpacesWaiter = null;
-    throw new Error(started.error ?? 'Rowboat sign-in could not start');
+      throw new Error(started.error ?? 'Deck sign-in could not start');
   }
   await completed;
 }
@@ -526,11 +526,11 @@ export async function connectProvider(provider: string, credentials?: { clientId
         validateCallback: (url) => {
           const receivedState = url.searchParams.get('state');
           if (receivedState == null || receivedState === '') {
-            return 'The sign-in response is missing its state parameter. Close this tab and retry from Rowboat.';
+            return 'The sign-in response is missing its state parameter. Close this tab and retry from Deck.';
           }
           if (receivedState !== state) {
             console.warn(`[OAuth] ${provider}: received state ${receivedState} does not match live flow state ${state || '<unset>'}`);
-            return 'This sign-in attempt is no longer active. Close this tab and retry from Rowboat.';
+            return 'This sign-in attempt is no longer active. Close this tab and retry from Deck.';
           }
           return null;
         },

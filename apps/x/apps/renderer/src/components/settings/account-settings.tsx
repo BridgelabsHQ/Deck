@@ -93,7 +93,7 @@ export function AccountSettings({ dialogOpen }: AccountSettingsProps) {
         setIsRowboatConnected(event.success)
         setConnecting(false)
         if (event.success) {
-          toast.success('Logged in to Rowboat')
+          toast.success('Logged in to Deck')
         }
       }
     })
@@ -113,11 +113,11 @@ export function AccountSettings({ dialogOpen }: AccountSettingsProps) {
       setConnecting(true)
       const result = await window.ipc.invoke('oauth:connect', { provider: 'rowboat' })
       if (!result.success) {
-        toast.error(result.error || 'Failed to log in to Rowboat')
+        toast.error(result.error || 'Failed to log in to Deck')
         setConnecting(false)
       }
     } catch {
-      toast.error('Failed to log in to Rowboat')
+      toast.error('Failed to log in to Deck')
       setConnecting(false)
     }
   }, [])
@@ -128,12 +128,12 @@ export function AccountSettings({ dialogOpen }: AccountSettingsProps) {
       const result = await window.ipc.invoke('oauth:disconnect', { provider: 'rowboat' })
       if (result.success) {
         setIsRowboatConnected(false)
-        toast.success('Logged out of Rowboat')
+        toast.success('Logged out of Deck')
       } else {
-        toast.error('Failed to log out of Rowboat')
+        toast.error('Failed to log out of Deck')
       }
     } catch {
-      toast.error('Failed to log out of Rowboat')
+      toast.error('Failed to log out of Deck')
     } finally {
       setDisconnecting(false)
     }
@@ -157,13 +157,13 @@ export function AccountSettings({ dialogOpen }: AccountSettingsProps) {
           <p className="text-sm font-medium">Not logged in</p>
           <p className="text-xs text-muted-foreground">
             {spacesOnlySession
-              ? 'Your Rowboat account is connected for Spaces. Log in to use it for premium features too.'
-              : 'Log in to your Rowboat account to access premium features'}
+              ? 'Your Deck account is connected for Spaces. Log in to use it for premium features too.'
+              : 'Log in to your Deck account to access premium features'}
           </p>
         </div>
         <Button onClick={handleConnect} disabled={connecting}>
           {connecting ? <Loader2 className="size-4 animate-spin mr-2" /> : null}
-          Log in to Rowboat
+          Log in to Deck
         </Button>
       </div>
     )
@@ -181,7 +181,7 @@ export function AccountSettings({ dialogOpen }: AccountSettingsProps) {
             <p className="text-sm font-medium">
               {billing?.userEmail ?? 'Loading...'}
             </p>
-            <p className="text-xs text-muted-foreground">Rowboat Account</p>
+            <p className="text-xs text-muted-foreground">Deck Account</p>
           </div>
         </div>
       </div>
@@ -279,7 +279,7 @@ export function AccountSettings({ dialogOpen }: AccountSettingsProps) {
           <h4 className="text-sm font-medium">Log Out</h4>
         </div>
         <p className="text-xs text-muted-foreground">
-          Logging out will remove access to synced data and Rowboat-provided models.
+          Logging out will remove access to synced data and Deck-provided models.
         </p>
         <AlertDialog>
           <AlertDialogTrigger asChild>
@@ -289,9 +289,9 @@ export function AccountSettings({ dialogOpen }: AccountSettingsProps) {
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Log out of your Rowboat account?</AlertDialogTitle>
+              <AlertDialogTitle>Log out of your Deck account?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will remove access to synced data and Rowboat-provided models. You can log back in at any time.
+                This will remove access to synced data and Deck-provided models. You can log back in at any time.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

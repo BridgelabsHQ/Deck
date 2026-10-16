@@ -52,9 +52,9 @@ afterEach(cleanup)
 
 describe('labels', () => {
     const names = new Map([['harsh', 'Harsh'], ['arjun', 'Arjun']])
-    it('name actors, agents as their person’s Rowboat, and fold crowds', () => {
+    it('name actors, agents as their person’s Deck, and fold crowds', () => {
         expect(actorLabel([{ memberId: 'harsh', actingMode: 'direct' }], names)).toBe('Harsh')
-        expect(actorLabel([{ memberId: 'arjun', actingMode: 'agent' }], names)).toBe("Arjun's Rowboat")
+        expect(actorLabel([{ memberId: 'arjun', actingMode: 'agent' }], names)).toBe("Arjun's Deck")
         expect(actorLabel([{ memberId: 'harsh', actingMode: 'direct' }, { memberId: 'arjun', actingMode: 'direct' }], names)).toBe('Harsh and Arjun')
         expect(actorLabel([{ memberId: 'a', actingMode: 'direct' }, { memberId: 'b', actingMode: 'direct' }, { memberId: 'c', actingMode: 'direct' }, { memberId: 'd', actingMode: 'direct' }], names)).toBe('a, b and 2 others')
     })

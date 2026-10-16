@@ -52,7 +52,7 @@ export async function listGatewayModels(): Promise<{ providers: ProviderSummary[
     return {
         providers: [{
             id: 'rowboat',
-            name: 'Rowboat',
+            name: 'Deck',
             models,
         }],
     };

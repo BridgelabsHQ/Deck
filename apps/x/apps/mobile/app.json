@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Rowboat",
+    "name": "Deck",
     "slug": "rowboat-mobile",
     "version": "0.1.0",
     "orientation": "portrait",
@@ -11,9 +11,9 @@
       "bundleIdentifier": "com.rowboat.app.mobile",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "The camera is used to scan the pairing code shown in Rowboat on your Mac.",
-        "NSMicrophoneUsageDescription": "The microphone is used to talk to your Rowboat agents with voice.",
-        "NSLocalNetworkUsageDescription": "Rowboat connects to the Rowboat app on your Mac over your local network.",
+        "NSCameraUsageDescription": "The camera is used to scan the pairing code shown in Deck on your Mac.",
+        "NSMicrophoneUsageDescription": "The microphone is used to talk to your Deck agents with voice.",
+        "NSLocalNetworkUsageDescription": "Deck connects to the Deck app on your Mac over your local network.",
         "NSBonjourServices": [
           "_http._tcp",
           "_http._tcp"

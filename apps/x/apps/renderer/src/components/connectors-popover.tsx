@@ -218,7 +218,7 @@ export function ConnectorsPopover({ children, tooltip, open: openProp, onOpenCha
                     <div className="px-2 py-1.5">
                       <span className="text-xs font-medium text-muted-foreground">Account</span>
                     </div>
-                    {renderOAuthProvider('rowboat', 'Rowboat', <User className="size-4" />, 'Log in to your Rowboat account')}
+                    {renderOAuthProvider('rowboat', 'Deck', <User className="size-4" />, 'Log in to your Deck account')}
                     <Separator className="my-2" />
                   </>
                 )

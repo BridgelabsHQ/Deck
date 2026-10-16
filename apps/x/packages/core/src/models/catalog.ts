@@ -54,7 +54,7 @@ export interface ModelCatalogResult {
 }
 
 const PROVIDER_DISPLAY_NAMES: Record<string, string> = {
-    rowboat: "Rowboat",
+    rowboat: "Deck",
     codex: "OpenAI Codex",
     openai: "OpenAI",
     anthropic: "Anthropic",

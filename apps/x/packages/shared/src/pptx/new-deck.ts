@@ -584,8 +584,8 @@ function corePropsXml(title: string, createdAt: string): string {
     ' xmlns:dcmitype="http://purl.org/dc/dcmitype/"' +
     ' xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
     `<dc:title>${escapeXmlText(title)}</dc:title>` +
-    '<dc:creator>Rowboat</dc:creator>' +
-    '<cp:lastModifiedBy>Rowboat</cp:lastModifiedBy>' +
+    '<dc:creator>Deck</dc:creator>' +
+    '<cp:lastModifiedBy>Deck</cp:lastModifiedBy>' +
     `<dcterms:created xsi:type="dcterms:W3CDTF">${stamp}</dcterms:created>` +
     `<dcterms:modified xsi:type="dcterms:W3CDTF">${stamp}</dcterms:modified>` +
     '</cp:coreProperties>'
@@ -597,7 +597,7 @@ function appPropsXml(): string {
     XML_HEAD +
     '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"' +
     ' xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">' +
-    '<Application>Rowboat</Application>' +
+    '<Application>Deck</Application>' +
     '<Slides>1</Slides>' +
     '<PresentationFormat>Widescreen</PresentationFormat>' +
     '</Properties>'

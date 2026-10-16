@@ -18,7 +18,7 @@ const FLAVOR_NAMES: Record<string, string> = {
   openrouter: 'OpenRouter',
   aigateway: 'AI Gateway',
   ollama: 'Ollama',
-  rowboat: 'Rowboat',
+  rowboat: 'Deck',
   codex: 'ChatGPT',
   'openai-compatible': 'Custom',
 };

@@ -229,8 +229,8 @@ module.exports = {
             { name: 'Rowboat', schemes: ['rowboat'] },
         ],
         extendInfo: {
-            NSAudioCaptureUsageDescription: 'Rowboat needs access to system audio to transcribe meetings from other apps (Zoom, Meet, etc.)',
-            NSCameraUsageDescription: 'Rowboat uses your camera in video chat mode so the assistant can see you and give feedback (e.g. pitch practice).',
+            NSAudioCaptureUsageDescription: 'Deck needs access to system audio to transcribe meetings from other apps (Zoom, Meet, etc.)',
+            NSCameraUsageDescription: 'Deck uses your camera in video chat mode so the assistant can see you and give feedback (e.g. pitch practice).',
         },
         // Signs the packaged app's executables (rowboat.exe etc.); the Squirrel
         // maker below separately signs the installer it produces.

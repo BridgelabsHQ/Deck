@@ -48,7 +48,7 @@ export function buildThemeXml(palette: DeckPalette): string {
     `<a:latin typeface="${typeface}"/><a:ea typeface=""/><a:cs typeface=""/>${scripts}`
   return (
     XML_HEAD +
-    `<a:theme ${A_NS} name="Rowboat ${palette.name}"><a:themeElements>` +
+    `<a:theme ${A_NS} name="Deck ${palette.name}"><a:themeElements>` +
     `<a:clrScheme name="${palette.name}">` +
     slot('dk1') +
     slot('lt1') +

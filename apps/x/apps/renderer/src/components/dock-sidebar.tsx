@@ -943,7 +943,7 @@ export function DockSidebar({
     : hasOauthError
       ? 'Accounts need attention'
       : !isRowboatConnected
-        ? 'Sign in to Rowboat'
+        ? 'Sign in to Deck'
         : (isSyncing || hasServiceErrors)
           ? syncStatusLabel
           : (currentBillingPlan?.displayName ?? syncStatusLabel)
@@ -969,7 +969,7 @@ export function DockSidebar({
         {
           item: {
             key: 'assistant', label: 'Assistant', icon: MascotFaceIcon as unknown as LucideIcon,
-            status: 'Rowboat assistant',
+            status: 'Deck assistant',
             running: activeNav === 'assistant',
             onClick: () => {
               closeFlyouts()
@@ -1323,7 +1323,7 @@ export function DockSidebar({
             ) : (
               <ContextMenuItem disabled={loggingIn} onClick={() => void handleRowboatLogin()}>
                 <LogIn className="mr-2 size-3.5" />
-                {loggingIn ? 'Signing in…' : 'Sign in to Rowboat'}
+                {loggingIn ? 'Signing in…' : 'Sign in to Deck'}
               </ContextMenuItem>
             )}
           </>

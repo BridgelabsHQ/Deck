@@ -428,8 +428,8 @@ function MessageRowImpl({
                                 <Bot className="size-3" />
                                 {thread.workingAgents.length === 1
                                     ? thread.workingAgents[0] === selfMemberId
-                                        ? 'Your Rowboat is working…'
-                                        : `${memberNames.get(thread.workingAgents[0]!) ?? thread.workingAgents[0]}’s Rowboat is working…`
+                                        ? 'Your Deck is working…'
+                                        : `${memberNames.get(thread.workingAgents[0]!) ?? thread.workingAgents[0]}’s Deck is working…`
                                     : `${thread.workingAgents.length} agents working…`}
                             </span>
                         )}
@@ -449,7 +449,7 @@ function MessageRowImpl({
                             title="Open the thread"
                             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2 py-1 text-xs text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                         >
-                            <Loader2 className="size-3 animate-spin" /> Rowboat is working on a reply…
+                            <Loader2 className="size-3 animate-spin" /> Deck is working on a reply…
                         </button>
                         {onOpenAgentChat && (
                             <button
@@ -465,7 +465,7 @@ function MessageRowImpl({
                             <button
                                 type="button"
                                 onClick={() => onStopAgent(thread.rootMessageId)}
-                                title="Stop your Rowboat"
+                                title="Stop your Deck"
                                 className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
                             >
                                 <Square className="size-2.5 fill-current" /> Stop
